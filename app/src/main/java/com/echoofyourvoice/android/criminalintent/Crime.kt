@@ -7,6 +7,6 @@ class Crime {
     var mTitle = ""
     val mDate = Date()
     var mIsSolved = false
-    var mRequiresPolice = false 
+    //var mRequiresPolice = false
 
 }
