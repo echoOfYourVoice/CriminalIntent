@@ -1,6 +1,5 @@
 package com.echoofyourvoice.android.criminalintent
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +17,11 @@ class CrimeListFragment: Fragment() {
 
     private lateinit var mCrimeRecyclerView: RecyclerView
     private lateinit var mAdapter: CrimeAdapter
+
+
+    companion object {
+        private var mSelectedItem = RecyclerView.NO_POSITION
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,7 +44,10 @@ class CrimeListFragment: Fragment() {
             mAdapter = CrimeAdapter(crimes)
             mCrimeRecyclerView.adapter = mAdapter
 
-            mAdapter.notifyDataSetChanged()
+            if (mSelectedItem != RecyclerView.NO_POSITION) {
+                mAdapter.notifyItemChanged(mSelectedItem)
+                mSelectedItem = RecyclerView.NO_POSITION
+            } else mAdapter.notifyDataSetChanged()
 
         }
     }
@@ -51,7 +58,7 @@ class CrimeListFragment: Fragment() {
     }
 
     //private class CrimeHolder(v: View, parent: ViewGroup):
-    private class CrimeHolder(inflater: LayoutInflater, parent: ViewGroup):
+    private inner class CrimeHolder(inflater: LayoutInflater, parent: ViewGroup):
         RecyclerView.ViewHolder(inflater.inflate(R.layout.list_item_crime, parent, false)), View.OnClickListener {
 
         private var mTitleTextView: TextView = itemView.findViewById(R.id.crime_title)
@@ -76,13 +83,16 @@ class CrimeListFragment: Fragment() {
 
         override fun onClick(v: View?) {
             //Toast.makeText(v?.context, mCrime.mTitle + " clicked!", Toast.LENGTH_SHORT).show()
+            if (bindingAdapterPosition != RecyclerView.NO_POSITION) mSelectedItem = bindingAdapterPosition
             if (v?.context != null) {
                 //val intent = Intent(v.context, CrimeActivity::class.java)
 
-                val intent = (CrimeActivity::newIntent)(CrimeActivity(), v.context, mCrime.mId)
-                if (intent != null) {
-                v.context.startActivity(intent)
-                }
+                //val intent = (CrimeActivity::newIntent)(CrimeActivity(), v.context, mCrime.mId)
+
+                //val intent = (CrimeActivity::newIntent)(CrimeActivity(), v.context, mSelectedItem)
+                // swap to pager
+                val intent = (CrimePagerActivity::newIntent)(CrimePagerActivity(), v.context, mCrime.mId)
+                v.context?.startActivity(intent)
             }
         }
 
@@ -109,7 +119,7 @@ class CrimeListFragment: Fragment() {
                 //else -> LayoutInflater.from(parent.context).inflate(R.layout.list_item_crime_requires_police, parent, false)
             //}
 
-            return CrimeHolder(layoutInflater, parent)
+            return CrimeListFragment().CrimeHolder(layoutInflater, parent)
         }
 
         //override fun getItemViewType(position: Int): Int {

@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import java.util.*
 
 
@@ -17,7 +18,9 @@ class CrimeFragment: Fragment() {
 
     companion object {
         const val ARG_CRIME_ID = "crime_id"
-        fun newInstance(crimeId: UUID): CrimeFragment {
+        const val DIALOG_DATE = "DialogDate"
+        //fun newInstance(crimeId: UUID): CrimeFragment {
+        fun newInstance(crimeId: Int): CrimeFragment {
             val args = Bundle()
             args.putSerializable(ARG_CRIME_ID, crimeId)
 
@@ -26,6 +29,7 @@ class CrimeFragment: Fragment() {
             return fragment
         }
     }
+
 
     private lateinit var mCrime: Crime
     private lateinit var mTitleField: EditText
@@ -36,8 +40,12 @@ class CrimeFragment: Fragment() {
         super.onCreate(savedInstanceState)
         //mCrime = Crime()
         //val crimeID: UUID = activity?.intent?.getSerializableExtra(CrimeActivity.EXTRA_CRIME_ID) as UUID
-        val crimeID = arguments?.getSerializable(ARG_CRIME_ID) as UUID
-        mCrime = CrimeLab[activity!!].getCrime(crimeID)!!
+        //val crimeID = arguments?.getSerializable(ARG_CRIME_ID) as UUID
+        val crimeIndex = arguments?.getSerializable(ARG_CRIME_ID) as Int
+        //mCrime = CrimeLab[activity!!].getCrime(crimeID)!!
+        mCrime = CrimeLab[activity!!].getCrimes()[crimeIndex]
+
+        // new get mCrime
     }
 
     override fun onCreateView(
@@ -49,7 +57,14 @@ class CrimeFragment: Fragment() {
 
         mDateButton = v.findViewById(R.id.crime_date)
         mDateButton.text = mCrime.mDate.toString()
-        mDateButton.isEnabled = false
+        //mDateButton.isEnabled = false
+        mDateButton.setOnClickListener {
+            val manager: FragmentManager? = fragmentManager
+            val dialog: DatePickerFragment = DatePickerFragment()
+            if (manager != null) {
+                dialog.show(manager, DIALOG_DATE)
+            }
+        }
 
         mSolvedCheckBox = v.findViewById(R.id.crime_solved)
         mSolvedCheckBox.isChecked = mCrime.mIsSolved

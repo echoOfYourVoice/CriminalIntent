@@ -28,7 +28,7 @@ class CrimeLab() {
 
     fun getCrime(id: UUID?): Crime? {
         for (crime in mCrimes) {
-            if (crime.mId.equals(id)) {
+            if (crime.mId == id) {
                 return crime
             }
         }

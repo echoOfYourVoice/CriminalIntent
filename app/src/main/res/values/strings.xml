@@ -7,4 +7,6 @@
     <string name="crime_title">Crime title</string>
     <string name="crime_date">Crime date</string>
     <string name="call_police">Call police!</string>
+    <string name="date_picker_title">Date of crime:</string>
+
 </resources>
