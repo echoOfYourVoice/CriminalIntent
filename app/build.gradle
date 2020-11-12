@@ -5,6 +5,7 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
+    ext.anko_version = '0.10.0'
 
     defaultConfig {
         applicationId "com.echoofyourvoice.android.criminalintent"
@@ -35,4 +36,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.0-alpha06'
+    implementation "org.jetbrains.anko:anko-common:$anko_version"
 }

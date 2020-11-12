@@ -38,7 +38,7 @@ class CrimePagerActivity: AppCompatActivity() {
         val fm = supportFragmentManager
         mViewPager.adapter = object: FragmentStatePagerAdapter(fm) {
             override fun getItem(position: Int): Fragment {
-                val crime = mCrimes[position]
+                //val crime = mCrimes[position]
                 setButtonAvailability()
                 return CrimeFragment.newInstance(position)
             }

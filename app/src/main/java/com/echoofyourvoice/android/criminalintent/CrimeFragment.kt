@@ -1,5 +1,7 @@
 package com.echoofyourvoice.android.criminalintent
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -17,8 +19,9 @@ import java.util.*
 class CrimeFragment: Fragment() {
 
     companion object {
-        const val ARG_CRIME_ID = "crime_id"
-        const val DIALOG_DATE = "DialogDate"
+        private const val ARG_CRIME_ID = "crime_id"
+        private const val DIALOG_DATE = "DialogDate"
+        private const val REQUEST_DATE = 0
         //fun newInstance(crimeId: UUID): CrimeFragment {
         fun newInstance(crimeId: Int): CrimeFragment {
             val args = Bundle()
@@ -56,11 +59,13 @@ class CrimeFragment: Fragment() {
        val v = inflater.inflate(R.layout.fragment_crime, container, false)
 
         mDateButton = v.findViewById(R.id.crime_date)
-        mDateButton.text = mCrime.mDate.toString()
+        updateDate()
         //mDateButton.isEnabled = false
         mDateButton.setOnClickListener {
             val manager: FragmentManager? = fragmentManager
-            val dialog: DatePickerFragment = DatePickerFragment()
+            //val dialog: DatePickerFragment = DatePickerFragment()
+            val dialog = DatePickerFragment.newInstance(mCrime.mDate)
+            dialog.setTargetFragment(this, REQUEST_DATE)
             if (manager != null) {
                 dialog.show(manager, DIALOG_DATE)
             }
@@ -91,4 +96,16 @@ class CrimeFragment: Fragment() {
         return v
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (resultCode != Activity.RESULT_OK) return
+        if (requestCode == REQUEST_DATE) {
+            val date = data?.getSerializableExtra(DatePickerFragment.EXTRA_DATE) as Date
+            mCrime.mDate = date
+            updateDate()
+        }
+    }
+
+    private fun updateDate() {
+        mDateButton.text = mCrime.mDate.toString()
+    }
 }

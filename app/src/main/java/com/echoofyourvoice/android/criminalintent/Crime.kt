@@ -5,7 +5,7 @@ import java.util.*
 class Crime {
     val mId: UUID = UUID.randomUUID()
     var mTitle = ""
-    val mDate = Date()
+    var mDate = Date()
     var mIsSolved = false
     //var mRequiresPolice = false
 
