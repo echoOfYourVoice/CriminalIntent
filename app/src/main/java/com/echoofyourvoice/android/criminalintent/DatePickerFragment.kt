@@ -6,6 +6,8 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.DatePicker
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -48,14 +50,11 @@ class DatePickerFragment: DialogFragment() {
         return AlertDialog.Builder(activity!!)
             .setView(v)
             .setTitle(R.string.date_picker_title)
-            .setPositiveButton(android.R.string.ok, object: DialogInterface.OnClickListener{
-                override fun onClick(dialog: DialogInterface?, which: Int) {
-                    sendResult(Activity.RESULT_OK, GregorianCalendar(mDatePicker.year, mDatePicker.month, mDatePicker.dayOfMonth).time)
-                }
-
-            })
+            .setPositiveButton(android.R.string.ok
+            ) { _: DialogInterface, _: Int -> sendResult(Activity.RESULT_OK, GregorianCalendar(mDatePicker.year, mDatePicker.month, mDatePicker.dayOfMonth).time) }
             .create()
     }
+
 
     private fun sendResult(resultCode: Int, date: Date) {
         if (targetFragment == null) return

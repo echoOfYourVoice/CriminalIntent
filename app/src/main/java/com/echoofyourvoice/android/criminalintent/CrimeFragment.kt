@@ -5,14 +5,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import java.sql.Time
 import java.util.*
 
 
@@ -21,7 +20,9 @@ class CrimeFragment: Fragment() {
     companion object {
         private const val ARG_CRIME_ID = "crime_id"
         private const val DIALOG_DATE = "DialogDate"
+        private const val DIALOG_TIME = "DialogTime"
         private const val REQUEST_DATE = 0
+        private const val REQUEST_TIME = 1
         //fun newInstance(crimeId: UUID): CrimeFragment {
         fun newInstance(crimeId: Int): CrimeFragment {
             val args = Bundle()
@@ -37,6 +38,7 @@ class CrimeFragment: Fragment() {
     private lateinit var mCrime: Crime
     private lateinit var mTitleField: EditText
     private lateinit var mDateButton: Button
+    private lateinit var mTimeButton: Button
     private lateinit var mSolvedCheckBox: CheckBox
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,8 +49,28 @@ class CrimeFragment: Fragment() {
         val crimeIndex = arguments?.getSerializable(ARG_CRIME_ID) as Int
         //mCrime = CrimeLab[activity!!].getCrime(crimeID)!!
         mCrime = CrimeLab[activity!!].getCrimes()[crimeIndex]
-
+        setHasOptionsMenu(true)
         // new get mCrime
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.fragment_crime, menu)
+    }
+
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        return when(item.itemId) {
+            R.id.delete_crime -> {
+                val crimes = context?.let { CrimeLab[it].getCrimes() }
+                crimes?.remove(mCrime)
+                this.activity?.finish()
+                return true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+
     }
 
     override fun onCreateView(
@@ -68,6 +90,16 @@ class CrimeFragment: Fragment() {
             dialog.setTargetFragment(this, REQUEST_DATE)
             if (manager != null) {
                 dialog.show(manager, DIALOG_DATE)
+            }
+        }
+
+        mTimeButton = v.findViewById(R.id.crime_time)
+        mTimeButton.setOnClickListener {
+            val manager: FragmentManager? = fragmentManager
+            val dialog = TimePickerFragment.newInstance(mCrime.mDate)
+            dialog.setTargetFragment(this, REQUEST_TIME)
+            if (manager != null) {
+                dialog.show(manager, DIALOG_TIME)
             }
         }
 
@@ -102,6 +134,12 @@ class CrimeFragment: Fragment() {
             val date = data?.getSerializableExtra(DatePickerFragment.EXTRA_DATE) as Date
             mCrime.mDate = date
             updateDate()
+        } else if (requestCode == REQUEST_TIME) {
+            val time = data?.getSerializableExtra(TimePickerFragment.EXTRA_TIME) as Time
+            mCrime.mDate.hours = time.hours
+            mCrime.mDate.minutes = time.minutes
+            updateDate()
+
         }
     }
 

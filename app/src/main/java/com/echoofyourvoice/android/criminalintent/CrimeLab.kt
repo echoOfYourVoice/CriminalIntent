@@ -8,7 +8,9 @@ class CrimeLab() {
 
     private val mCrimes: ArrayList<Crime> = ArrayList()
 
+
     private constructor(context: Context): this() {
+        /*
         for (i in 0..100) {
             val crime = Crime()
             crime.mTitle = "Crime #$i"
@@ -16,7 +18,9 @@ class CrimeLab() {
             //crime.mRequiresPolice = i % 2 == 0
             mCrimes.add(crime)
         }
+         */
     }
+
 
     companion object {
         private var sCrimeLab: CrimeLab? = null
@@ -37,4 +41,5 @@ class CrimeLab() {
 
     fun getCrimes() = mCrimes
 
+    fun addCrime(crime: Crime) = mCrimes.add(crime)
 }
