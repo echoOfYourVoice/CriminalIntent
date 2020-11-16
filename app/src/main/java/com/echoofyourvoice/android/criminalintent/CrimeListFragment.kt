@@ -68,7 +68,7 @@ class CrimeListFragment: Fragment() {
             val crimes = crimeLab.getCrimes()
             mAdapter = CrimeAdapter(crimes)
             mCrimeRecyclerView.adapter = mAdapter
-            if (crimes.size == 0) {
+            if (crimes.isEmpty()) {
                 mCrimeRecyclerView.visibility = View.GONE
                 mEmptyCrimeList.visibility = View.VISIBLE
             }
@@ -80,7 +80,10 @@ class CrimeListFragment: Fragment() {
             if (mSelectedItem != RecyclerView.NO_POSITION) {
                 mAdapter.notifyItemChanged(mSelectedItem)
                 mSelectedItem = RecyclerView.NO_POSITION
-            } else mAdapter.notifyDataSetChanged()
+            } else {
+                mAdapter.notifyDataSetChanged()
+                mAdapter.setCrimes(crimes)
+            }
 
         }
         updateSubtitle()
@@ -184,13 +187,17 @@ class CrimeListFragment: Fragment() {
         activity.supportActionBar?.subtitle = subtitle
     }
 
-    private class CrimeAdapter(private val mCrimes: List<Crime>) :
+    private class CrimeAdapter(private var mCrimes: List<Crime>) :
         RecyclerView.Adapter<CrimeHolder>() {
 
         //companion object {
           //  const val TYPE_ITEM1 = 0
             //const val TYPE_ITEM2 = 1
         //}
+
+        fun setCrimes(crimes: List<Crime>) {
+            mCrimes = crimes
+        }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CrimeHolder {
             val layoutInflater = LayoutInflater.from(parent.context)
