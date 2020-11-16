@@ -108,11 +108,11 @@ class CrimeListFragment: Fragment() {
 
         fun bind(crime: Crime) {
             mCrime = crime
-            mTitleTextView.text = mCrime.mTitle
+            mTitleTextView.text = mCrime.title
             //mDateTextView.text = mCrime.mDate.toString()
-            mCalendar.time = mCrime.mDate
-            mDateTextView.text = "${mCalendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault())}, ${mDateFormat.format(mCrime.mDate)}"
-            mSolverImageView.visibility = if (mCrime.mIsSolved) View.VISIBLE else View.GONE
+            mCalendar.time = mCrime.date
+            mDateTextView.text = "${mCalendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault())}, ${mDateFormat.format(mCrime.date)}"
+            mSolverImageView.visibility = if (mCrime.isSolved) View.VISIBLE else View.GONE
         }
 
         override fun onClick(v: View?) {
@@ -125,7 +125,7 @@ class CrimeListFragment: Fragment() {
 
                 //val intent = (CrimeActivity::newIntent)(CrimeActivity(), v.context, mSelectedItem)
                 // swap to pager
-                val intent = (CrimePagerActivity::newIntent)(CrimePagerActivity(), v.context, mCrime.mId)
+                val intent = (CrimePagerActivity::newIntent)(CrimePagerActivity(), v.context, mCrime.id)
                 v.context?.startActivity(intent)
             }
         }
@@ -165,7 +165,7 @@ class CrimeListFragment: Fragment() {
     private fun newCrime() {
         val crime = Crime()
         context?.let { CrimeLab[it].addCrime(crime) }
-        val intent = context?.let { CrimePagerActivity().newIntent(it, crime.mId) }
+        val intent = context?.let { CrimePagerActivity().newIntent(it, crime.id) }
         startActivity(intent)
     }
 

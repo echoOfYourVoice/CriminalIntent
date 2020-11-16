@@ -63,7 +63,7 @@ class CrimePagerActivity: AppCompatActivity() {
         }
 
 
-        for (i in 0..100) if (mCrimes[i].mId == crimeID) {
+        for (i in 0..100) if (mCrimes[i].id == crimeID) {
             mViewPager.currentItem = i
             break
         }

@@ -2,11 +2,9 @@ package com.echoofyourvoice.android.criminalintent
 
 import java.util.*
 
-class Crime {
-    val mId: UUID = UUID.randomUUID()
-    var mTitle = ""
-    var mDate = Date()
-    var mIsSolved = false
-    //var mRequiresPolice = false
+class Crime @JvmOverloads constructor(val id: UUID = UUID.randomUUID()) {
+    var title: String? = null
+    var date: Date = Date()
+    var isSolved = false
 
 }

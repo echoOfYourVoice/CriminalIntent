@@ -53,6 +53,12 @@ class CrimeFragment: Fragment() {
         // new get mCrime
     }
 
+    override fun onPause() {
+        super.onPause()
+
+        context?.let { CrimeLab[it] }?.updateCrime(mCrime)
+    }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.fragment_crime, menu)
@@ -60,7 +66,7 @@ class CrimeFragment: Fragment() {
 
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
+        /*
         return when(item.itemId) {
             R.id.delete_crime -> {
                 val crimes = context?.let { CrimeLab[it].getCrimes() }
@@ -71,6 +77,8 @@ class CrimeFragment: Fragment() {
             else -> super.onOptionsItemSelected(item)
         }
 
+         */
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onCreateView(
@@ -86,7 +94,7 @@ class CrimeFragment: Fragment() {
         mDateButton.setOnClickListener {
             val manager: FragmentManager? = fragmentManager
             //val dialog: DatePickerFragment = DatePickerFragment()
-            val dialog = DatePickerFragment.newInstance(mCrime.mDate)
+            val dialog = DatePickerFragment.newInstance(mCrime.date)
             dialog.setTargetFragment(this, REQUEST_DATE)
             if (manager != null) {
                 dialog.show(manager, DIALOG_DATE)
@@ -96,7 +104,7 @@ class CrimeFragment: Fragment() {
         mTimeButton = v.findViewById(R.id.crime_time)
         mTimeButton.setOnClickListener {
             val manager: FragmentManager? = fragmentManager
-            val dialog = TimePickerFragment.newInstance(mCrime.mDate)
+            val dialog = TimePickerFragment.newInstance(mCrime.date)
             dialog.setTargetFragment(this, REQUEST_TIME)
             if (manager != null) {
                 dialog.show(manager, DIALOG_TIME)
@@ -104,11 +112,11 @@ class CrimeFragment: Fragment() {
         }
 
         mSolvedCheckBox = v.findViewById(R.id.crime_solved)
-        mSolvedCheckBox.isChecked = mCrime.mIsSolved
-        mSolvedCheckBox.setOnCheckedChangeListener{ _, isChecked ->  mCrime.mIsSolved = isChecked}
+        mSolvedCheckBox.isChecked = mCrime.isSolved
+        mSolvedCheckBox.setOnCheckedChangeListener{ _, isChecked ->  mCrime.isSolved = isChecked}
 
         mTitleField = v.findViewById(R.id.crime_title)
-        mTitleField.setText(mCrime.mTitle)
+        mTitleField.setText(mCrime.title)
         mTitleField.addTextChangedListener(object: TextWatcher {
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -116,7 +124,7 @@ class CrimeFragment: Fragment() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                mCrime.mTitle = s.toString()
+                mCrime.title = s.toString()
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -132,18 +140,18 @@ class CrimeFragment: Fragment() {
         if (resultCode != Activity.RESULT_OK) return
         if (requestCode == REQUEST_DATE) {
             val date = data?.getSerializableExtra(DatePickerFragment.EXTRA_DATE) as Date
-            mCrime.mDate = date
+            mCrime.date = date
             updateDate()
         } else if (requestCode == REQUEST_TIME) {
             val time = data?.getSerializableExtra(TimePickerFragment.EXTRA_TIME) as Time
-            mCrime.mDate.hours = time.hours
-            mCrime.mDate.minutes = time.minutes
+            mCrime.date.hours = time.hours
+            mCrime.date.minutes = time.minutes
             updateDate()
 
         }
     }
 
     private fun updateDate() {
-        mDateButton.text = mCrime.mDate.toString()
+        mDateButton.text = mCrime.date.toString()
     }
 }
