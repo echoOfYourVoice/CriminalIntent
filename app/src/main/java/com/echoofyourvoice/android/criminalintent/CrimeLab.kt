@@ -108,6 +108,10 @@ class CrimeLab() {
         return CrimeCursorWrapper(cursor)
     }
 
+    fun deleteCrime(crime: Crime) {
+        mDataBase.delete(CrimeTable.NAME, CrimeTable.Cols.UUID + " = ?", arrayOf(crime.id.toString()))
+    }
+
     private fun getContentValues(crime: Crime): ContentValues {
         val values = ContentValues()
         values.put(CrimeTable.Cols.UUID, crime.id.toString())

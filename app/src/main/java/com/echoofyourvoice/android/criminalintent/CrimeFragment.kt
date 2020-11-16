@@ -66,19 +66,17 @@ class CrimeFragment: Fragment() {
 
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        /*
+
         return when(item.itemId) {
             R.id.delete_crime -> {
-                val crimes = context?.let { CrimeLab[it].getCrimes() }
-                crimes?.remove(mCrime)
+                //val crimes = context?.let { CrimeLab[it].getCrimes() }
+                context?.let { CrimeLab[it].deleteCrime(mCrime) }
                 this.activity?.finish()
                 return true
             }
             else -> super.onOptionsItemSelected(item)
         }
 
-         */
-        return super.onOptionsItemSelected(item)
     }
 
     override fun onCreateView(
