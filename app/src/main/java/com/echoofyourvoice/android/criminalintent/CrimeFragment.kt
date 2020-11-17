@@ -2,9 +2,12 @@ package com.echoofyourvoice.android.criminalintent
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.text.Editable
 import android.text.TextWatcher
+import android.text.format.DateFormat
 import android.view.*
 import android.widget.Button
 import android.widget.CheckBox
@@ -23,6 +26,7 @@ class CrimeFragment: Fragment() {
         private const val DIALOG_TIME = "DialogTime"
         private const val REQUEST_DATE = 0
         private const val REQUEST_TIME = 1
+        private const val REQUEST_CONTACT = 2
         //fun newInstance(crimeId: UUID): CrimeFragment {
         fun newInstance(crimeId: Int): CrimeFragment {
             val args = Bundle()
@@ -40,6 +44,8 @@ class CrimeFragment: Fragment() {
     private lateinit var mDateButton: Button
     private lateinit var mTimeButton: Button
     private lateinit var mSolvedCheckBox: CheckBox
+    private lateinit var mReportButton: Button
+    private lateinit var mSuspectButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -131,6 +137,35 @@ class CrimeFragment: Fragment() {
 
         })
 
+        mReportButton = v.findViewById(R.id.crime_report)
+        mReportButton.setOnClickListener {
+            var i = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, getCrimeReport())
+                putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject))
+            }
+            i = Intent.createChooser(i, getString(R.string.send_report))
+            startActivity(i)
+        }
+
+        val pickContact = Intent(
+            Intent.ACTION_PICK,
+            ContactsContract.Contacts.CONTENT_URI
+        )
+        //pickContact.addCategory(Intent.CATEGORY_HOME)
+
+        mSuspectButton = v.findViewById(R.id.crime_suspect)
+        mSuspectButton.setOnClickListener {
+            startActivityForResult(pickContact, REQUEST_CONTACT)
+        }
+
+        if (mCrime.suspect != null) mSuspectButton.text = mCrime.suspect
+
+        val packageManager = activity?.packageManager
+        if (packageManager != null) {
+            if (packageManager.resolveActivity(pickContact, PackageManager.MATCH_DEFAULT_ONLY) == null) mSuspectButton.isEnabled = false
+        }
+
         return v
     }
 
@@ -146,7 +181,33 @@ class CrimeFragment: Fragment() {
             mCrime.date.minutes = time.minutes
             updateDate()
 
+        } else if (requestCode == REQUEST_CONTACT && data != null) {
+            val contactUri = data.data
+            val queryFields = arrayOf(ContactsContract.Contacts.DISPLAY_NAME)
+
+            val cursor = contactUri?.let { activity?.contentResolver?.query(it, queryFields, null, null, null) }
+
+            try {
+                if (cursor?.count == 0) return
+                cursor?.moveToFirst()
+
+                val suspect = cursor?.getString(0)
+                mCrime.suspect = suspect
+                mSuspectButton.text = suspect
+            } finally {
+                cursor?.close()
+            }
         }
+    }
+
+    private fun getCrimeReport(): String {
+        val solvedString = getString(if (mCrime.isSolved) R.string.crime_report_solved else R.string.crime_report_unsolved)
+        val dateFormat = "EEE, MMM dd"
+        val dateString = DateFormat.format(dateFormat, mCrime.date).toString()
+
+        val suspect = if (mCrime.suspect == null) getString(R.string.crime_report_no_suspect) else getString(R.string.crime_report_suspect, mCrime.suspect)
+
+        return getString(R.string.crime_report, mCrime.title, dateString, solvedString, suspect)
     }
 
     private fun updateDate() {
