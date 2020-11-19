@@ -3,6 +3,8 @@ package com.echoofyourvoice.android.criminalintent
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.text.Editable
@@ -12,10 +14,14 @@ import android.view.*
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.ImageButton
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ShareCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import java.sql.Time
 import java.util.*
+import java.util.jar.Manifest
 
 
 class CrimeFragment: Fragment() {
@@ -27,6 +33,7 @@ class CrimeFragment: Fragment() {
         private const val REQUEST_DATE = 0
         private const val REQUEST_TIME = 1
         private const val REQUEST_CONTACT = 2
+        private const val REQUEST_NUMBER = 3
         //fun newInstance(crimeId: UUID): CrimeFragment {
         fun newInstance(crimeId: Int): CrimeFragment {
             val args = Bundle()
@@ -46,6 +53,7 @@ class CrimeFragment: Fragment() {
     private lateinit var mSolvedCheckBox: CheckBox
     private lateinit var mReportButton: Button
     private lateinit var mSuspectButton: Button
+    private lateinit var mCallButton: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,6 +147,8 @@ class CrimeFragment: Fragment() {
 
         mReportButton = v.findViewById(R.id.crime_report)
         mReportButton.setOnClickListener {
+
+            /*
             var i = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, getCrimeReport())
@@ -146,6 +156,14 @@ class CrimeFragment: Fragment() {
             }
             i = Intent.createChooser(i, getString(R.string.send_report))
             startActivity(i)
+             */
+
+            activity?.let { it1 -> ShareCompat.IntentBuilder.from(it1) }?.apply {
+                setType("text/plain")
+                setText(getCrimeReport())
+                setChooserTitle(R.string.send_report)
+                startChooser()
+            }
         }
 
         val pickContact = Intent(
@@ -159,6 +177,18 @@ class CrimeFragment: Fragment() {
             startActivityForResult(pickContact, REQUEST_CONTACT)
         }
 
+        mCallButton = v.findViewById(R.id.crime_call)
+        mCallButton.setOnClickListener {
+
+
+            // Переделать на функцию и сделать вызов для кнопки выбора suspect'а
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+                if (context?.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) activity?.let {
+                    requestPermissions(arrayOf(android.Manifest.permission.READ_CONTACTS), 1)
+                } else startActivityForResult(pickContact, REQUEST_NUMBER)
+            } else startActivityForResult(pickContact, REQUEST_NUMBER)
+        }
+
         if (mCrime.suspect != null) mSuspectButton.text = mCrime.suspect
 
         val packageManager = activity?.packageManager
@@ -167,6 +197,24 @@ class CrimeFragment: Fragment() {
         }
 
         return v
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (grantResults[0] == 0) {
+
+            val pickContact = Intent(
+                Intent.ACTION_PICK,
+                ContactsContract.Contacts.CONTENT_URI
+            )
+
+            startActivityForResult(pickContact, REQUEST_NUMBER)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -185,7 +233,15 @@ class CrimeFragment: Fragment() {
             val contactUri = data.data
             val queryFields = arrayOf(ContactsContract.Contacts.DISPLAY_NAME)
 
-            val cursor = contactUri?.let { activity?.contentResolver?.query(it, queryFields, null, null, null) }
+            val cursor = contactUri?.let {
+                activity?.contentResolver?.query(
+                    it,
+                    queryFields,
+                    null,
+                    null,
+                    null
+                )
+            }
 
             try {
                 if (cursor?.count == 0) return
@@ -197,6 +253,53 @@ class CrimeFragment: Fragment() {
             } finally {
                 cursor?.close()
             }
+
+        } else if (requestCode == REQUEST_NUMBER && data != null) {
+
+            val contactUri = data.data
+
+            val cursor = contactUri?.let {
+                activity?.contentResolver?.query(it, null, null, null, null
+                )
+            }
+
+            try {
+                if (cursor?.count == 0) return
+                cursor?.moveToFirst()
+                val contactId = cursor?.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID))
+
+                val phones = activity?.contentResolver?.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId, null, null)
+
+                phones?.moveToFirst()
+                val phoneNumber = phones?.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
+
+                phones?.close()
+
+                val i = Intent(Intent.ACTION_DIAL).apply {
+                    setData(Uri.parse("tel:$phoneNumber"))
+                }
+                startActivity(i)
+
+            } finally {
+                cursor?.close()
+            }
+
+            /*
+            val contactUri = data.data
+            val queryFields = arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER)
+            val cursor =
+                contactUri?.let { activity?.contentResolver?.query(it, queryFields, null, null, null) }
+            if (cursor?.count == 0) return
+
+            cursor?.moveToFirst()
+
+            if (cursor != null) {
+                while (! cursor.isAfterLast) {
+                    cursor.moveToNext()
+                }
+            }
+
+             */
         }
     }
 
