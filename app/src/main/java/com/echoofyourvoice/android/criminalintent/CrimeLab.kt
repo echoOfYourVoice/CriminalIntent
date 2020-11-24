@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import database.CrimeBaseHelper
 import database.CrimeCursorWrapper
 import database.CrimeDbSchema.CrimeTable
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -120,6 +121,11 @@ class CrimeLab() {
         values.put(CrimeTable.Cols.SOLVED, if (crime.isSolved) 1 else 0)
         values.put(CrimeTable.Cols.SUSPECT, crime.suspect)
         return values
+    }
+
+    fun getPhotoFile(crime: Crime): File {
+        val filesDir = mContext.filesDir
+        return File(filesDir, crime.getPhotoFileName())
     }
 
 }

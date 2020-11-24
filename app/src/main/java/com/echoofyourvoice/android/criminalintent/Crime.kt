@@ -8,4 +8,7 @@ class Crime @JvmOverloads constructor(val id: UUID = UUID.randomUUID()) {
     var date: Date = Date()
     var isSolved = false
 
+    fun getPhotoFileName(): String {
+        return "IMG_${id}.jpg"
+    }
 }

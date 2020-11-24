@@ -19,6 +19,15 @@
         </activity>
         <activity android:name=".CrimePagerActivity"
             android:parentActivityName=".CrimeListActivity"/>
-    </application>
 
+        <provider
+            android:authorities="com.echoofyourvoice.android.criminalintent.fileprovider"
+            android:name="androidx.core.content.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/files"/>
+        </provider>
+    </application>
 </manifest>

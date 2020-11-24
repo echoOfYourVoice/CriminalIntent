@@ -3,22 +3,23 @@ package com.echoofyourvoice.android.criminalintent
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.format.DateFormat
 import android.view.*
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.ImageButton
+import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ShareCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import java.io.File
 import java.sql.Time
 import java.util.*
 import java.util.jar.Manifest
@@ -34,6 +35,8 @@ class CrimeFragment: Fragment() {
         private const val REQUEST_TIME = 1
         private const val REQUEST_CONTACT = 2
         private const val REQUEST_NUMBER = 3
+        private const val REQUEST_PHOTO = 4
+
         //fun newInstance(crimeId: UUID): CrimeFragment {
         fun newInstance(crimeId: Int): CrimeFragment {
             val args = Bundle()
@@ -46,14 +49,26 @@ class CrimeFragment: Fragment() {
     }
 
 
-    private lateinit var mCrime: Crime
+    //private lateinit var mCrime: Crime
+    private var mCrime: Crime = Crime()
     private lateinit var mTitleField: EditText
+    //private val mTitleField: EditText? = view?.findViewById(R.id.crime_title)
     private lateinit var mDateButton: Button
+    //private val mDateButton: Button? = view?.findViewById(R.id.crime_date)
     private lateinit var mTimeButton: Button
+    //private val mTimeButton: Button? = view?.findViewById(R.id.crime_time)
     private lateinit var mSolvedCheckBox: CheckBox
+    //private val mSolvedCheckBox: CheckBox? = view?.findViewById(R.id.crime_solved)
+    //private val mReportButton: Button? = view?.findViewById(R.id.crime_report)
     private lateinit var mReportButton: Button
     private lateinit var mSuspectButton: Button
+    //private val mSuspectButton: Button? = view?.findViewById(R.id.crime_suspect)
     private lateinit var mCallButton: ImageButton
+    //private val mCallButton: ImageButton? = view?.findViewById(R.id.crime_call)
+    private lateinit var mImageView: ImageView
+    private lateinit var mImageButton:ImageButton
+    private lateinit var mPhotoFile: File
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +78,7 @@ class CrimeFragment: Fragment() {
         val crimeIndex = arguments?.getSerializable(ARG_CRIME_ID) as Int
         //mCrime = CrimeLab[activity!!].getCrime(crimeID)!!
         mCrime = CrimeLab[activity!!].getCrimes()[crimeIndex]
+        mPhotoFile = CrimeLab[activity!!].getPhotoFile(mCrime)
         setHasOptionsMenu(true)
         // new get mCrime
     }
@@ -99,7 +115,6 @@ class CrimeFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View? {
        val v = inflater.inflate(R.layout.fragment_crime, container, false)
-
         mDateButton = v.findViewById(R.id.crime_date)
         updateDate()
         //mDateButton.isEnabled = false
@@ -149,14 +164,14 @@ class CrimeFragment: Fragment() {
         mReportButton.setOnClickListener {
 
             /*
-            var i = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, getCrimeReport())
-                putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject))
-            }
-            i = Intent.createChooser(i, getString(R.string.send_report))
-            startActivity(i)
-             */
+                var i = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, getCrimeReport())
+                    putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject))
+                }
+                i = Intent.createChooser(i, getString(R.string.send_report))
+                startActivity(i)
+                 */
 
             activity?.let { it1 -> ShareCompat.IntentBuilder.from(it1) }?.apply {
                 setType("text/plain")
@@ -174,7 +189,14 @@ class CrimeFragment: Fragment() {
 
         mSuspectButton = v.findViewById(R.id.crime_suspect)
         mSuspectButton.setOnClickListener {
-            startActivityForResult(pickContact, REQUEST_CONTACT)
+
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+                if (context?.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) activity?.let {
+                    requestPermissions(arrayOf(android.Manifest.permission.READ_CONTACTS), 1)
+                } else startActivityForResult(pickContact, REQUEST_NUMBER)
+            } else startActivityForResult(pickContact, REQUEST_NUMBER)
+
+            //startActivityForResult(pickContact, REQUEST_CONTACT)
         }
 
         mCallButton = v.findViewById(R.id.crime_call)
@@ -196,6 +218,30 @@ class CrimeFragment: Fragment() {
             if (packageManager.resolveActivity(pickContact, PackageManager.MATCH_DEFAULT_ONLY) == null) mSuspectButton.isEnabled = false
         }
 
+        val captureImage = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        val canTakePhoto = packageManager?.let {
+            captureImage.resolveActivity(
+                it
+            )
+        } != null
+
+        mImageButton  = v.findViewById(R.id.crime_camera)
+        mImageButton.isEnabled = canTakePhoto
+        mImageButton.setOnClickListener {
+            val uri = activity?.let { it1 -> FileProvider.getUriForFile(it1, "com.echoofyourvoice.android.criminalintent.fileprovider", mPhotoFile) }
+            captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+            val cameraActivities = activity?.packageManager?.queryIntentActivities(captureImage, PackageManager.MATCH_DEFAULT_ONLY)
+            if (cameraActivities != null) {
+                for (activity in cameraActivities) {
+                    getActivity()?.grantUriPermission(activity.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                }
+            }
+            startActivityForResult(captureImage, REQUEST_PHOTO)
+        }
+
+        mImageView = v.findViewById(R.id.crime_photo)
+        updatePhotoView()
+
         return v
     }
 
@@ -212,8 +258,7 @@ class CrimeFragment: Fragment() {
                 Intent.ACTION_PICK,
                 ContactsContract.Contacts.CONTENT_URI
             )
-
-            startActivityForResult(pickContact, REQUEST_NUMBER)
+            startActivityForResult(pickContact, if (requestCode == REQUEST_NUMBER) REQUEST_NUMBER else REQUEST_CONTACT)
         }
     }
 
@@ -249,7 +294,7 @@ class CrimeFragment: Fragment() {
 
                 val suspect = cursor?.getString(0)
                 mCrime.suspect = suspect
-                mSuspectButton.text = suspect
+                mSuspectButton?.text = suspect
             } finally {
                 cursor?.close()
             }
@@ -300,6 +345,10 @@ class CrimeFragment: Fragment() {
             }
 
              */
+        } else if (requestCode == REQUEST_PHOTO) {
+            val uri = activity?.let { FileProvider.getUriForFile(it, "com.echoofyourvoice.android.criminalintent.fileprovider", mPhotoFile) }
+            activity?.revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            updatePhotoView()
         }
     }
 
@@ -314,6 +363,14 @@ class CrimeFragment: Fragment() {
     }
 
     private fun updateDate() {
-        mDateButton.text = mCrime.date.toString()
+        mDateButton?.text = mCrime.date.toString()
+    }
+
+    private fun updatePhotoView() {
+        if (!mPhotoFile.exists()) mImageView.setImageDrawable(null)
+        else {
+            val bitMap = activity?.let { PictureUtils.getScaledBitMap(mPhotoFile.path, it) }
+            mImageView.setImageBitmap(bitMap)
+        }
     }
 }

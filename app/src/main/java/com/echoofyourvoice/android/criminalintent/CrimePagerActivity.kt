@@ -24,6 +24,7 @@ class CrimePagerActivity: AppCompatActivity() {
 
     private lateinit var mViewPager: ViewPager
     private lateinit var mCrimes: List<Crime>
+    //private lateinit var mRightButton: ImageButton
     private lateinit var mRightButton: ImageButton
     private lateinit var mLeftButton: ImageButton
 
