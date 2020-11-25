@@ -3,7 +3,6 @@ package com.echoofyourvoice.android.criminalintent
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -14,7 +13,6 @@ import android.text.TextWatcher
 import android.text.format.DateFormat
 import android.view.*
 import android.widget.*
-import androidx.core.app.ActivityCompat
 import androidx.core.app.ShareCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
@@ -22,7 +20,6 @@ import androidx.fragment.app.FragmentManager
 import java.io.File
 import java.sql.Time
 import java.util.*
-import java.util.jar.Manifest
 
 
 class CrimeFragment: Fragment() {
@@ -31,6 +28,7 @@ class CrimeFragment: Fragment() {
         private const val ARG_CRIME_ID = "crime_id"
         private const val DIALOG_DATE = "DialogDate"
         private const val DIALOG_TIME = "DialogTime"
+        private const val DIALOG_IMAGE = "DialogImage"
         private const val REQUEST_DATE = 0
         private const val REQUEST_TIME = 1
         private const val REQUEST_CONTACT = 2
@@ -240,6 +238,26 @@ class CrimeFragment: Fragment() {
         }
 
         mImageView = v.findViewById(R.id.crime_photo)
+        mImageView.setOnClickListener {
+
+            /*
+                        val manager: FragmentManager? = fragmentManager
+            val dialog = TimePickerFragment.newInstance(mCrime.date)
+            dialog.setTargetFragment(this, REQUEST_TIME)
+            if (manager != null) {
+                dialog.show(manager, DIALOG_TIME)
+            }
+             */
+
+            val manager: FragmentManager? = fragmentManager
+            val dialog = ImageFragment.newInstance(mCrime.id.toString())
+            dialog.setTargetFragment(this, REQUEST_PHOTO)
+            if (manager != null) {
+                dialog.show(manager, DIALOG_IMAGE)
+            }
+
+        }
+
         updatePhotoView()
 
         return v
@@ -363,7 +381,7 @@ class CrimeFragment: Fragment() {
     }
 
     private fun updateDate() {
-        mDateButton?.text = mCrime.date.toString()
+        mDateButton.text = mCrime.date.toString()
     }
 
     private fun updatePhotoView() {

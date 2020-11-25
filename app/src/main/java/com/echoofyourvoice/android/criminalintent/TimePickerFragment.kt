@@ -2,7 +2,6 @@ package com.echoofyourvoice.android.criminalintent
 
 import android.app.Activity
 import android.app.Dialog
-import android.app.TimePickerDialog
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
