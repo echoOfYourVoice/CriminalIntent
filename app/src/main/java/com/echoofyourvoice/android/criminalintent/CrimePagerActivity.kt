@@ -10,17 +10,18 @@ import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.viewpager.widget.ViewPager
 import java.util.*
 
-class CrimePagerActivity: AppCompatActivity() {
+class CrimePagerActivity: AppCompatActivity(), CrimeFragment.Callbacks {
 
     companion object {
         const val EXTRA_CRIME_ID = "com.echoofyourvoice.android.criminalintent.crime_id"
+
+        fun newIntent(packageContext: Context, crimeId: UUID): Intent {
+            val intent = Intent(packageContext, CrimePagerActivity::class.java)
+            intent.putExtra(EXTRA_CRIME_ID, crimeId)
+            return intent
+        }
     }
 
-    fun newIntent(packageContext: Context, crimeId: UUID): Intent {
-        val intent = Intent(packageContext, CrimePagerActivity::class.java)
-        intent.putExtra(EXTRA_CRIME_ID, crimeId)
-        return intent
-    }
 
     private lateinit var mViewPager: ViewPager
     private lateinit var mCrimes: List<Crime>
@@ -72,5 +73,9 @@ class CrimePagerActivity: AppCompatActivity() {
     private fun setButtonAvailability() {
         mLeftButton.isEnabled = mViewPager.currentItem != 0
         mRightButton.isEnabled = mViewPager.currentItem != mCrimes.lastIndex
+    }
+
+    override fun onCrimeUpdated(crime: Crime) {
+
     }
 }

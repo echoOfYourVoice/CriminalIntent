@@ -1,11 +1,9 @@
 package com.echoofyourvoice.android.criminalintent
 
+import android.content.Context
 import android.os.Bundle
 import android.view.*
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,11 +19,21 @@ class CrimeListFragment: Fragment() {
     private var mSubtitleVisible = false
     private lateinit var mEmptyCrimeList: LinearLayout
     private lateinit var mAddCrimeButton: Button
+    //private var mCallbacks: Callbacks? = null
 
+    public interface Callbacks {
+        fun onCrimeSelected(crime: Crime)
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mCallbacks = context as Callbacks
+    }
 
     companion object {
         private var mSelectedItem = RecyclerView.NO_POSITION
         private const val SAVED_SUBTITLE_VISIBLE = "subtitle"
+        private var mCallbacks: Callbacks? = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +70,12 @@ class CrimeListFragment: Fragment() {
         outState.putBoolean(SAVED_SUBTITLE_VISIBLE, mSubtitleVisible)
     }
 
-    private fun updateUI() {
+    override fun onDetach() {
+        super.onDetach()
+        mCallbacks = null
+    }
+
+    fun updateUI() {
         if (context != null) {
             val crimeLab = CrimeLab[context!!]
             val crimes = crimeLab.getCrimes()
@@ -122,14 +135,18 @@ class CrimeListFragment: Fragment() {
             //Toast.makeText(v?.context, mCrime.mTitle + " clicked!", Toast.LENGTH_SHORT).show()
             if (bindingAdapterPosition != RecyclerView.NO_POSITION) mSelectedItem = bindingAdapterPosition
             if (v?.context != null) {
+
                 //val intent = Intent(v.context, CrimeActivity::class.java)
 
                 //val intent = (CrimeActivity::newIntent)(CrimeActivity(), v.context, mCrime.mId)
 
                 //val intent = (CrimeActivity::newIntent)(CrimeActivity(), v.context, mSelectedItem)
                 // swap to pager
-                val intent = (CrimePagerActivity::newIntent)(CrimePagerActivity(), v.context, mCrime.id)
-                v.context?.startActivity(intent)
+                //val intent = (CrimePagerActivity::newIntent)(CrimePagerActivity(), v.context, mCrime.id)
+
+                //val intent = CrimePagerActivity.newIntent(v.context, mCrime.id)
+                //v.context?.startActivity(intent)
+                mCallbacks?.onCrimeSelected(mCrime)
             }
         }
 
@@ -152,13 +169,26 @@ class CrimeListFragment: Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.new_crime -> {
-                newCrime()
+                val crime = Crime()
+                context?.let { CrimeLab[it].addCrime(crime) }
+                updateUI()
+                mCallbacks?.onCrimeSelected(crime)
                 true
             }
             R.id.show_subtitle -> {
                 mSubtitleVisible = !mSubtitleVisible
                 activity?.invalidateOptionsMenu()
                 updateSubtitle()
+                true
+            }
+            R.id.delete_crime -> {
+                if (mSelectedItem != RecyclerView.NO_POSITION) {
+                    val crime = CrimeLab[context as Context].getCrimes()[mSelectedItem]
+                    CrimeLab[context as Context].deleteCrime(crime)
+                    mSelectedItem = RecyclerView.NO_POSITION
+                    //view?.findViewById<FrameLayout>(R.id.detail_fragment_container)?.removeAllViews()
+                }
+                updateUI()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -168,7 +198,7 @@ class CrimeListFragment: Fragment() {
     private fun newCrime() {
         val crime = Crime()
         context?.let { CrimeLab[it].addCrime(crime) }
-        val intent = context?.let { CrimePagerActivity().newIntent(it, crime.id) }
+        val intent = context?.let { CrimePagerActivity.newIntent(it, crime.id) }
         startActivity(intent)
     }
 

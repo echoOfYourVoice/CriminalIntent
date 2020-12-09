@@ -1,6 +1,7 @@
 package com.echoofyourvoice.android.criminalintent
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -18,8 +19,11 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import java.io.File
+import java.lang.Exception
 import java.sql.Time
 import java.util.*
+import javax.security.auth.callback.Callback
+import kotlin.reflect.typeOf
 
 
 class CrimeFragment: Fragment() {
@@ -34,6 +38,7 @@ class CrimeFragment: Fragment() {
         private const val REQUEST_CONTACT = 2
         private const val REQUEST_NUMBER = 3
         private const val REQUEST_PHOTO = 4
+        private var mCallbacks: Callbacks? = null
 
         //fun newInstance(crimeId: UUID): CrimeFragment {
         fun newInstance(crimeId: Int): CrimeFragment {
@@ -44,6 +49,24 @@ class CrimeFragment: Fragment() {
             fragment.arguments = args
             return fragment
         }
+
+        fun newInstance(crimeId: UUID): CrimeFragment {
+            val args = Bundle()
+            args.putSerializable(ARG_CRIME_ID, crimeId)
+
+            val fragment = CrimeFragment()
+            fragment.arguments = args
+            return fragment
+        }
+    }
+
+    public interface Callbacks {
+        fun onCrimeUpdated(crime: Crime)
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mCallbacks = context as Callbacks
     }
 
 
@@ -73,9 +96,15 @@ class CrimeFragment: Fragment() {
         //mCrime = Crime()
         //val crimeID: UUID = activity?.intent?.getSerializableExtra(CrimeActivity.EXTRA_CRIME_ID) as UUID
         //val crimeID = arguments?.getSerializable(ARG_CRIME_ID) as UUID
-        val crimeIndex = arguments?.getSerializable(ARG_CRIME_ID) as Int
+        mCrime = if (arguments?.getSerializable(ARG_CRIME_ID) is Int) {
+            val crimeIndex = arguments?.getSerializable(ARG_CRIME_ID) as Int
+            CrimeLab[activity as Context].getCrimes()[crimeIndex]
+        } else {
+            val crimeIndex = arguments?.getSerializable(ARG_CRIME_ID) as UUID
+            CrimeLab[activity as Context].getCrime(crimeIndex) as Crime
+        }
+
         //mCrime = CrimeLab[activity!!].getCrime(crimeID)!!
-        mCrime = CrimeLab[activity!!].getCrimes()[crimeIndex]
         mPhotoFile = CrimeLab[activity!!].getPhotoFile(mCrime)
         setHasOptionsMenu(true)
         // new get mCrime
@@ -85,6 +114,11 @@ class CrimeFragment: Fragment() {
         super.onPause()
 
         context?.let { CrimeLab[it] }?.updateCrime(mCrime)
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        mCallbacks = null
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -138,7 +172,10 @@ class CrimeFragment: Fragment() {
 
         mSolvedCheckBox = v.findViewById(R.id.crime_solved)
         mSolvedCheckBox.isChecked = mCrime.isSolved
-        mSolvedCheckBox.setOnCheckedChangeListener{ _, isChecked ->  mCrime.isSolved = isChecked}
+        mSolvedCheckBox.setOnCheckedChangeListener{ _, isChecked ->
+            mCrime.isSolved = isChecked
+            updateCrime()
+        }
 
         mTitleField = v.findViewById(R.id.crime_title)
         mTitleField.setText(mCrime.title)
@@ -150,6 +187,7 @@ class CrimeFragment: Fragment() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 mCrime.title = s.toString()
+                updateCrime()
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -285,6 +323,7 @@ class CrimeFragment: Fragment() {
         if (requestCode == REQUEST_DATE) {
             val date = data?.getSerializableExtra(DatePickerFragment.EXTRA_DATE) as Date
             mCrime.date = date
+            updateCrime()
             updateDate()
         } else if (requestCode == REQUEST_TIME) {
             val time = data?.getSerializableExtra(TimePickerFragment.EXTRA_TIME) as Time
@@ -312,6 +351,7 @@ class CrimeFragment: Fragment() {
 
                 val suspect = cursor?.getString(0)
                 mCrime.suspect = suspect
+                updateCrime()
                 mSuspectButton?.text = suspect
             } finally {
                 cursor?.close()
@@ -366,8 +406,14 @@ class CrimeFragment: Fragment() {
         } else if (requestCode == REQUEST_PHOTO) {
             val uri = activity?.let { FileProvider.getUriForFile(it, "com.echoofyourvoice.android.criminalintent.fileprovider", mPhotoFile) }
             activity?.revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            updateCrime()
             updatePhotoView()
         }
+    }
+
+    private fun updateCrime() {
+        CrimeLab[activity as Context].updateCrime(mCrime)
+        mCallbacks?.onCrimeUpdated(mCrime)
     }
 
     private fun getCrimeReport(): String {
