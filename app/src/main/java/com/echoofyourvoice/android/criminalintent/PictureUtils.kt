@@ -8,7 +8,7 @@ import kotlin.math.round
 
 class PictureUtils {
     companion object {
-        fun getScaledBitMap(path: String, destWidth: Int, destHeight: Int): Bitmap {
+        private fun getScaledBitMap(path: String, destWidth: Int, destHeight: Int): Bitmap {
             var options = BitmapFactory.Options()
             options.inJustDecodeBounds = true
             BitmapFactory.decodeFile(path, options)

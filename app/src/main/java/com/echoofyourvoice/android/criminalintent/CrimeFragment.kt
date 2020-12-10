@@ -413,6 +413,7 @@ class CrimeFragment: Fragment() {
 
     private fun updateCrime() {
         CrimeLab[activity as Context].updateCrime(mCrime)
+        if (mCallbacks == null) mCallbacks = context as Callbacks
         mCallbacks?.onCrimeUpdated(mCrime)
     }
 

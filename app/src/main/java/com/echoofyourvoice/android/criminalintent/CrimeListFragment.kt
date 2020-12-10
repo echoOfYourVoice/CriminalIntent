@@ -3,9 +3,13 @@ package com.echoofyourvoice.android.criminalintent
 import android.content.Context
 import android.os.Bundle
 import android.view.*
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.text.DateFormat
@@ -23,6 +27,10 @@ class CrimeListFragment: Fragment() {
 
     public interface Callbacks {
         fun onCrimeSelected(crime: Crime)
+    }
+
+    public interface ItemTouchHelperAdapter {
+        fun onItemDismiss(position: Int)
     }
 
     override fun onAttach(context: Context) {
@@ -61,6 +69,10 @@ class CrimeListFragment: Fragment() {
         }
 
         updateUI()
+
+        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(mAdapter)
+        val touchHelper = ItemTouchHelper(callback)
+        touchHelper.attachToRecyclerView(mCrimeRecyclerView)
 
         return view
     }
@@ -217,8 +229,9 @@ class CrimeListFragment: Fragment() {
         activity.supportActionBar?.subtitle = subtitle
     }
 
-    private class CrimeAdapter(private var mCrimes: List<Crime>) :
-        RecyclerView.Adapter<CrimeHolder>() {
+    private inner class CrimeAdapter(private var mCrimes: List<Crime>) :
+        RecyclerView.Adapter<CrimeHolder>(), ItemTouchHelperAdapter {
+
 
         //companion object {
           //  const val TYPE_ITEM1 = 0
@@ -254,9 +267,37 @@ class CrimeListFragment: Fragment() {
             holder.bind(crime)
         }
 
+        override fun onItemDismiss(position: Int) {
+            CrimeLab[context as Context].deleteCrime(mCrimes[position])
+            mAdapter.notifyItemRemoved(position)
+            updateUI()
+        }
+
     }
 
+    private class SimpleItemTouchHelperCallback(private val adapter: CrimeAdapter): ItemTouchHelper.Callback() {
 
+        override fun isLongPressDragEnabled(): Boolean {
+            return true
+        }
 
+        override fun isItemViewSwipeEnabled(): Boolean {
+            return true
+        }
+
+        override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
+            val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
+            val swipeFlags = ItemTouchHelper.START or ItemTouchHelper.END
+            return makeMovementFlags(dragFlags, swipeFlags)
+        }
+
+        override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+            return true
+        }
+
+        override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+            adapter.onItemDismiss(viewHolder.bindingAdapterPosition)
+        }
+    }
 
 }
